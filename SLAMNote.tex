@@ -1,0 +1,176 @@
+
+\documentclass[]{elegantbook}
+\usepackage[UTF8]{ctex} % 中文支持
+\author{龚正茂}
+\date{\today}
+\email{530192497@qq.com}
+
+\usepackage{ntheorem}
+
+\zhtitle{SLAM 笔记}
+%\zhend{综述}
+\entitle{SLAM Note}
+%\enend{Template}
+\version{1.0}
+\myquote{Victory won\rq t come to us unless we go to it.}
+\logo{logo.pdf}
+\cover{cover.pdf}
+
+%green color
+   \definecolor{main1}{RGB}{0,120,2}
+   \definecolor{second1}{RGB}{230,90,7}
+   \definecolor{third1}{RGB}{0,160,152}
+%cyan color
+   \definecolor{main2}{RGB}{0,175,152}
+   \definecolor{second2}{RGB}{239,126,30}
+   \definecolor{third2}{RGB}{120,8,13}
+%blue color
+   \definecolor{main3}{RGB}{20,50,104}
+   \definecolor{second3}{RGB}{180,50,131}
+   \definecolor{third3}{RGB}{7,127,128}
+
+\usepackage{makecell}
+\usepackage{lipsum}
+\usepackage{texnames}
+\usepackage{bm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+% 插入代码
+\usepackage{listings}
+\usepackage{xcolor}
+% 插入超链接
+\usepackage{hyperref}
+% 插入图片
+\usepackage{graphicx}
+
+% 避免浮动的图片跨越section
+\usepackage[section]{placeins}
+
+\usepackage{float}
+
+
+
+\newfontfamily\courier{Courier New}
+\lstset{linewidth=1.1\textwidth,
+	numbers=left, %设置行号位置 
+	basicstyle=\small\courier,
+	numberstyle=\tiny\courier, %设置行号大小  
+	keywordstyle=\color{blue}\courier, %设置关键字颜色  
+	%identifierstyle=\bf，
+	commentstyle=\it\color[cmyk]{1,0,1,0}\courier, %设置注释颜色 
+	stringstyle=\it\color[RGB]{128,0,0}\courier,
+	%framexleftmargin=10mm,
+	frame=single, %设置边框格式  
+	backgroundcolor=\color[RGB]{245,245,244},
+	%escapeinside=``, %逃逸字符(1左面的键)，用于显示中文  
+	breaklines, %自动折行  
+	extendedchars=false, %解决代码跨页时，章节标题，页眉等汉字不显示的问题  
+	xleftmargin=2em,xrightmargin=2em, aboveskip=1em, %设置边距  
+	tabsize=4, %设置tab空格数  
+	showspaces=false %不显示空格  
+	basicstyle=\small\courier
+}  
+
+
+
+\begin{document}
+\maketitle
+\tableofcontents  %目录
+\mainmatter  		%正文部分（第一章），页码从1开始
+
+
+\chapter{入门到精通到放弃}
+
+\begin{enumerate}
+	\item 首先是立体几何知识，必须要清晰掌握谁相对谁旋转平移、坐标系变换等，多视图几何是个很好的教材；其它数学知识入：矩阵运算求解，李群李代数四元数，最优化求解，各种下降方法（梯度，高斯牛顿，LM,Dogleg），概率统计，贝叶斯等。
+	\item 目前流行的SLAM方法较多，基于滤波器的MSCKF，稀疏特征点的ORB-SLAM，半稠密的LSD以及稀疏直接法DSO等等，不同方法涉及到的理论有较大差异，如果都要搞懂那也是比较长期的过程。
+	\item 如果SLAM是基于雷达的，那么激光雷达原理必须清楚，粒子滤波器原理等，概率机器人这本书也非常重要。
+	\item 如果SLAM中要用到IMU，那么IMU的预积分理论必须要掌握。
+	\item 如果你的SLAM是基于滑窗的并且要用到localBA，那么边缘化理论必须要要掌握，否则一致性问题就会出现在你面前。如果你的SLAM是基于多状态的kalman滤波器的，或者是滑窗滤波器，那么一致性就非常重要，你要懂解决办法，FEJ，OC等方法要掌握；
+	\item State Estimation for Robotics是一本非常好的书，理论比较齐全，14讲看完可以看这个。
+\end{enumerate}
+
+
+
+\include{Multiview-Geometry-Base}
+\include{Vocabulary-Tree}
+\include{SLAM-Base}
+\include{LSD-SLAM}
+\include{ORB-SLAM2}
+\include{DSO-SLAM}
+\include{Vins-SLAM}
+\include{Talk-SLAM}
+\include{RGBD-Real-Time-Reconstruction}
+
+
+
+
+\nocite{EINAV2010,Havrylchyk2018} 
+
+\bibliographystyle{aer}
+\bibliography{reference}
+
+
+
+
+\appendix
+
+\chapter{最优化}\label{附录A}
+
+\section{最小二乘法}
+线性最小二乘法的公式如下：
+
+\begin{equation}
+	\min_{x}\|Ax-b\|
+\end{equation}
+
+其中$Ax$是变量$x$的线性函数。
+
+
+非线性最小二乘的公式如下：
+\begin{equation}
+	\min_{x} \|f(x)\|
+\end{equation}
+其中$f(x)$是变量$x$的非线性函数。
+
+
+\subsection{线性最小二乘法}
+
+其解为下列方程的解为:
+\begin{equation}
+A^TAx = A^Tb
+\end{equation}
+也即
+\begin{equation}
+x = (A^TA)^{-1}A^Tb
+\end{equation}
+
+
+
+\subsection{非线性最小二乘法}\label{appendix:non-linear-least-square}
+求解非线性最小二乘问题，就是将其变分线性最小二乘来求解，简单来说就是对函数$f(x)$进行线性展开。
+\begin{equation}
+	f(x) = f(x_n) + J_n(x - x_n) = f(x_n) + J_n\delta x
+\end{equation}
+\begin{equation}
+	\min_{x}\|f(x)\| = \min_{x}\|J_n\delta x - (-f(x_n))\|
+\end{equation}
+
+现在非线性最小二乘就变成了线性最小二乘问题，仿照线性最小二乘的解法，得到：
+\begin{equation}
+	J^TJ\delta x = -J^Tf(x_n)
+\end{equation}
+也即
+\begin{equation}
+	\delta x = -(J^TJ)^{-1}J^Tf(x_n)
+\end{equation}
+
+
+\subsection{加权最小二乘}
+
+
+
+
+
+
+\end{document}
