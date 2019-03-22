@@ -1,6 +1,140 @@
 
 \chapter{多视图几何基础}
+
 \section{相机成像模型}
+
+
+\begin{figure}[h]%%图
+	\centering  %插入的图片居中表示
+	\includegraphics[width=0.6\linewidth]{image/Multiview-Geometry-Base/pinhole_camera_model.png}  %插入的图，包括JPG,PNG,PDF,EPS等，放在源文件目录下
+	\caption{Pinhole camera model.}  %图片的名称
+	\label{fig:pinhole_camera_model}   %标签，用作引用
+\end{figure}
+
+单孔相机模型的数学模型如下：
+\begin{equation}
+	sp = K[R|t]P
+\end{equation}
+或者：
+\begin{equation}
+	s \left[\begin{array}{c}
+	u \\
+	v \\
+	1
+	\end{array}\right]
+	= 
+	\left[\begin{array}{ccc}
+		f_x & 0 & c_x \\
+		0 & f_y & c_y \\
+		0 & 0 & 1
+	\end{array}\right]
+	\left[\begin{array}{cccc}
+		r_{11} & r_{12} & r_{13} & t_1 \\
+		r_{21} & r_{22} & r_{23} & t_2 \\
+		r_{31} & r_{32} & r_{33} & t_3 \\
+	\end{array}\right]
+	\left[\begin{array}{c}
+		X \\
+		Y \\
+		Z \\
+		1
+	\end{array}\right]
+\end{equation}
+
+其中：
+\begin{itemize}
+	\item $(X, Y, Z)$是3D点在世界坐标系下的坐标
+	\item $(u, v)$是3D点投影到图像上之后的坐标
+	\item $K$是内参矩阵（instrinsic)
+	\item $cx, cy$是主点，通常情况下是图像中心
+	\item fx, fy是光心的长度（单位是像素）
+\end{itemize}
+
+如果图像被缩放了，那么上述的参数都需要随之缩放。上述的公式还可以写成下面这样：
+\begin{equation*}
+	\left[\begin{array}{c}
+		x \\
+		y \\
+		z
+	\end{array}
+	\right]
+	=
+	R 
+	\left[\begin{array}{c}
+		X \\
+		Y \\
+		Z
+	\end{array}
+	\right]
+	+ t
+\end{equation*}
+\begin{equation*}
+	x' = x / z
+\end{equation*}
+\begin{equation*}
+	y' = y / z
+\end{equation*}
+\begin{equation*}
+	u = f_x * x' + c_x
+\end{equation*}
+\begin{equation*}
+	v = f_y * y' + c_y
+\end{equation*}
+
+
+
+实际上相机的镜片可能有一些畸变，大多数是径向畸变（mostly radial distortion）和些微的切向畸变（slight tangential distortion）。所以上述的模型被扩展为：
+\begin{equation*}
+\left[\begin{array}{c}
+x \\
+y \\
+z
+\end{array}
+\right]
+=
+R 
+\left[\begin{array}{c}
+X \\
+Y \\
+Z
+\end{array}
+\right]
++ t
+\end{equation*}
+\begin{equation*}
+x' = x / z
+\end{equation*}
+\begin{equation*}
+y' = y / z
+\end{equation*}
+\begin{equation*}
+x'' = x'(1 + k_1 r^2 + k_2 r^4 + k_3 r^6) + 2p_1 x' y'+p_2(r^2+2x'^2)+s_1 r^2 + s_2 r^4
+\end{equation*}
+\begin{equation*}
+y'' = y'(1 + k_1 r^2 + k_2 r^4 + k_3 r^6)  + p_1(r_2 + 2y'^2) + 2p_2 x' y' + s_3 r^2 + s_4 r_4
+\end{equation*}
+\begin{equation*}
+where \ \ \ r^2 = x'^2 + y'^2
+\end{equation*}
+\begin{equation*}
+u = f_x * x'' + c_x
+\end{equation*}
+\begin{equation*}
+v = f_y * y'' + c_y
+\end{equation*}
+
+
+其中，$k_1$，$k_2$，$k_3$，$k_4$，$k_5$和$k_6$是径向畸变参数。$p_1$和$p_2$是切向畸变参数。$s_1$，$s_2$，$s_3$，$s_4$是prism畸变参数。
+
+
+$x'$和$y'$是归一化平面上未发生畸变的坐标，$x''$和$y''$是畸变之后的的坐标。这就导致了$u$和$v$也是畸变的。为了去除畸变，我们必须求得未去除畸变的坐标$x'$和$y'$，然后再重新投影到像素坐标系上。
+
+去畸变分为两种，对特征点去畸变和对图像去畸变和。
+
+\textbf{对特征点去畸变}。将畸变图像的特征点$(u, v)$反投影到归一化平面，得到$(x'', y'')$，然后运行逆畸变模型（应该能够逆过来操作吧），得到$(x', y')$，然后重新投影回图像平面，就得到了去畸变之后的坐标。
+
+\textbf{对图像去畸变}。如果是对畸变图像的每个点进行去畸变，得到的坐标可能是小数的，这就不好构造去畸变的曲线。所以，我们反过来做，对于去畸变图像的每个像素点$(u, v)$，将其投影到归一化平面，得到点$(x', y')$，然后运行畸变模型，得到$(x'', y'')$，然后在投影回像素平面，从而得到像素值（需要插值），那么就知道去畸变图像的像素点$(u, v)$处的像素值。
+
 
 
 \section{相似变换、仿射变换、射影变换的区别}
@@ -172,7 +306,7 @@ PnP问题的求解方法归纳如下：
 	\hline
 	DLT & No & 6 & Medium & Fast   \\
 	P3P& Yes & 3(4)& Medium & Fast \\
-	EPnP（Efficient PnP）Yes & 4 & High & Fast   \\
+	EPnP（Efficient PnP）Y& Yes & 4 & High & Fast   \\
 	UPnP & No & 4 & Medium & Fast  \\
 	MRE(LSI，最小二乘迭代) & Yes & 3 & Highest & Slow \\
 	\hline
@@ -219,11 +353,21 @@ PnP问题的求解方法归纳如下：
 
 
 \section{三角测量}
+三维重建里面需要用到多视图三角测量，来提高稳定性。但是其实原理上都是一样的，都是使用DLT方法来求解。
 
+\subsection{二视图三角测量}
+
+
+
+\subsection{多视图三角测量}
 
 
 
 \section{参考文献}
+
+Camera Calibration and 3D Reconstruction
+https://docs.opencv.org/3.4.5/d9/d0c/group\_\_calib3d.html
+
 透镜畸变及校正模型
 https://blog.csdn.net/dcrmg/article/details/52950141
 
@@ -231,6 +375,9 @@ https://blog.csdn.net/dcrmg/article/details/52950141
 图像矫正去畸变
 https://blog.csdn.net/weixin\_38009585/article/details/82356022
 
+
+单应矩阵分解
+https://blog.csdn.net/kokerf/article/details/72885435
 
 A Review of Solutions for Perspective-n-Point Problem in Camera Pose Estimation
 https://iopscience.iop.org/article/10.1088/1742-6596/1087/5/052009/pdf
